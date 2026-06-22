@@ -11,12 +11,12 @@ This app can be used to scrub out metadata from images.
 
 - Local Processing: The app runs completely in the user's browser via vanilla JavaScript. Because it doesn’t send images to an external server, it offers absolute privacy.
 
-- Lossless Stripping: Most basic tools "clean" an image by rendering it onto a hidden canvas and re-encoding it. That ruins the photo quality. This code parses the binary chunks of JPEGs and PNGs, cutting out the metadata chunks (APP1 markers for EXIF in JPEGs, eXIf/tEXt chunks in PNGs) without touching the actual image data. The picture quality stays identical to the original image.
+- Lossless Stripping: Most basic tools "clean" an image by rendering it onto a hidden canvas and re-encoding it. That can reduce the picture quality. This code parses the binary chunks of JPEGs and PNGs, cutting out the metadata chunks (APP1 markers for EXIF in JPEGs, eXIf/tEXt chunks in PNGs) without touching the actual image data. The picture quality stays identical to the original image.
 
 - Transparency: The app lists all the metadata that was removed.
 
 ## How to use
 
-Simply down the project folder and place it on your desktop. Then double click the photo-scrubber.html file. The app will open in your browser. 
+Simply download the project folder and place it on your desktop. Then double click the photo-scrubber.html file. The app will open in your browser. 
 
 <br>
