@@ -15,7 +15,7 @@ This app can be used to scrub out metadata from images.
 
 - Re-Encoding on Orientation: If an image has an orientation tag (e.g., shot sideways/upside down), the code falls back to re-encoding it at ~92% quality via Canvas to bake the rotation in. This means that it's no longer "lossless" for those specific images.
 
-- Transparency: The app lists all the metadata that was removed.
+- Transparency: The app lists all metadata that was removed.
 
 ## How to use
 
