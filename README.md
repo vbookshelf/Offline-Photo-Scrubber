@@ -14,7 +14,7 @@ Most people don’t realize that when they take a photo with a smartphone or dig
 - Device Footprints: The exact smartphone model, camera serial numbers, and software used.
 - Timestamps: The exact second, minute, and date the photo was taken.
 
-This app can be used to scrub out metadata from images.
+This app scrubs out metadata from png and jpg images.
 
 - Local Processing: The app runs completely in the user's browser via vanilla JavaScript. Because it doesn’t send images to an external server, it offers absolute privacy.
 
