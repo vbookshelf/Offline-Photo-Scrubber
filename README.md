@@ -16,7 +16,7 @@ Most people don’t realize that when they take a photo with a smartphone or dig
 
 This app scrubs out metadata from png and jpg images.
 
-- Local Processing: The app runs completely in the user's browser via vanilla JavaScript. Because it doesn’t send images to an external server, it offers absolute privacy.
+- Local Processing: Runs completely in the user's browser via vanilla JavaScript. Because it doesn’t send images to an external server, it offers absolute privacy.
 
 - Lossless Stripping: Most basic tools "clean" an image by rendering it onto a hidden canvas and re-encoding it. That can reduce the picture quality. This code parses the binary chunks of JPEGs and PNGs, cutting out the metadata chunks (APP1 markers for EXIF in JPEGs, eXIf/tEXt chunks in PNGs) without touching the actual image data. The picture quality stays identical to the original image.
 
