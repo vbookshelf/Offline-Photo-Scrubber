@@ -1,2 +1,2 @@
-# Offline Photo Scrubber
+# Offline Photo Stripper
 Offline open source browser based tool to strip metadata from PNG and JPG photos.
