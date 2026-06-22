@@ -20,3 +20,12 @@ This app can be used to scrub out metadata from images.
 Simply download the project folder and place it on your desktop. Then double click the photo-scrubber.html file. The app will open in your browser. 
 
 <br>
+
+## Revision History
+
+Version 1.0<br>
+23-June-2026<br>
+Prototype. Released for testing.
+
+<br>
+
