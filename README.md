@@ -36,6 +36,26 @@ Simply download the project folder and place it on your desktop. Then double cli
 
 - Verification Pass: The app doesn't blindly trust its own stripping logic. After creating the clean image, it automatically runs a verification scan on the fresh bytes to guarantee that the identifying data is actually gone before displaying the "Save" button.
 
+## How to manually verify that metadata has been removed
+
+Both Windows and macOS have built-in inspectors that show basic EXIF and location data.
+
+### On Windows:
+
+- Right-click the downloaded, clean image file and select Properties.
+
+- Go to the Details tab.
+
+- Scroll down to look for sections like Camera (Camera maker, model, focal length) and GPS (Latitude, Longitude). If the file was successfully scrubbed, these fields will either be completely blank or the entire section will be missing.
+
+### On macOS:
+
+- Right-click (or Control-click) the clean image file and select Get Info.
+
+- Expand the More Info section.
+
+- If the metadata was successfully removed, details like camera model, lens information, and the "Where" (GPS/map location) data will no longer appear.
+
 
 <br>
 
