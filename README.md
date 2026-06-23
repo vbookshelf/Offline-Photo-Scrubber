@@ -16,10 +16,6 @@ Most people don’t realize that when they take a photo with a smartphone or dig
 
 This app scrubs out metadata from png and jpg images.
 
-## How to use
-
-Simply download the project folder and place it on your desktop. Then double click the photo-scrubber.html file. The app will open in your browser. 
-
 ## Features
 
 - Local Processing: Runs completely in the user's browser via vanilla JavaScript. Because it doesn’t send images to an external server, it offers absolute privacy.
@@ -35,6 +31,12 @@ Simply download the project folder and place it on your desktop. Then double cli
 - Whitelist Approach: Instead of maintaining a "blacklist" of bad tags (which can easily fail if a new camera format introduces a custom tag), the app uses a whitelist approach via isJpegSegmentEssential and isPngChunkEssential. It strictly looks for the structural blocks required to render the image (like IHDR, PLTE, IDAT for PNGs). If a block isn't strictly necessary to display the pixels, it is discarded by default.
 
 - Verification Pass: The app doesn't blindly trust its own stripping logic. After creating the clean image, it automatically runs a verification scan on the fresh bytes to guarantee that the identifying data is actually gone before displaying the "Save" button.
+
+<br>
+
+## How to use
+
+Simply download the project folder and place it on your desktop. Then double click the photo-scrubber.html file. The app will open in your browser. 
 
 ## How to manually verify that metadata has been removed
 
