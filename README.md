@@ -17,7 +17,7 @@ Most people don’t realize that when they take a photo with a smartphone or dig
 - Device Footprints: The exact smartphone model, camera serial numbers, and software used.
 - Timestamps: The exact second, minute, and date the photo was taken.
 
-This app scrubs out metadata from png and jpg images.
+This app strips hidden metadata from JPG and PNG images. Use it to remove personally identifiable information before uploading photos to public forums (like GitHub), embedding them in presentations, or sharing with business associates. If you work from home, you don't want online clients knowing exactly where you live.
 
 ## Features
 
