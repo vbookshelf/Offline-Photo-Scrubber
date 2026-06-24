@@ -31,9 +31,9 @@ This app scrubs out metadata from png and jpg images.
 
 ## Architecture
 
-- Whitelist Approach: Instead of maintaining a "blacklist" of bad tags (which can easily fail if a new camera format introduces a custom tag), the app uses a whitelist approach via isJpegSegmentEssential and isPngChunkEssential. It strictly looks for the structural blocks required to render the image (like IHDR, PLTE, IDAT for PNGs). If a block isn't strictly necessary to display the pixels, it is discarded by default.
+- <b>Whitelist Approach</b>: Instead of maintaining a "blacklist" of bad tags (which can easily fail if a new camera format introduces a custom tag), the app uses a whitelist approach via isJpegSegmentEssential and isPngChunkEssential. It strictly looks for the structural blocks required to render the image (like IHDR, PLTE, IDAT for PNGs). If a block isn't strictly necessary to display the pixels, it is discarded by default.
 
-- Verification Pass: The app doesn't blindly trust its own stripping logic. After creating the clean image, it automatically runs a verification scan on the fresh bytes to guarantee that the identifying data is actually gone before displaying the "Save" button.
+- <b>Verification Pass</b>: The app doesn't blindly trust its own stripping logic. After creating the clean image, it automatically runs a verification scan on the fresh bytes to guarantee that the identifying data is actually gone before displaying the "Save" button.
 
 <br>
 
