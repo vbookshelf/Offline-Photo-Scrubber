@@ -27,7 +27,7 @@ This app scrubs out metadata from png and jpg images.
 
 - <b>Re-Encoding on Orientation</b>: If an image has an orientation tag (e.g., shot sideways/upside down), the code falls back to re-encoding it at ~92% quality via Canvas to bake the rotation in. This means that it's no longer "lossless" for those specific images. Photos taken with a smartphone have an orientation tag.
 
-- <b>Transparency</b>: You can manually verify that metadata was removed by using the simple file info viewers that are built into macOS and Windows.
+- <b>Transparency</b>: You can manually verify that metadata was removed by using the file info inspectors that are built into macOS and Windows.
 
 ## Architecture
 
@@ -37,9 +37,9 @@ This app scrubs out metadata from png and jpg images.
 
 <br>
 
-## How to use
+## How to use offline
 
-Simply download the project folder and place it on your desktop. Then double click the photo-scrubber.html file. The app will open in your browser. 
+Simply download the project folder and place it on your desktop. Then double click the index.html file. The app will open in your browser. 
 
 ## How to manually verify that metadata has been removed
 
