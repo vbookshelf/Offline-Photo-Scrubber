@@ -55,7 +55,7 @@ Both Windows and macOS have built-in inspectors that show basic EXIF and locatio
 
 ### On macOS:
 
-- Right-click (or Control-click) the clean image file and select Get Info.
+- Right-click the clean image file and select Get Info.
 
 - Expand the More Info section.
 
