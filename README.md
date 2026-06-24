@@ -1,9 +1,12 @@
 # Offline Photo Scrubber
 A desktop, offline, open source browser based tool to remove hidden EXIF metadata (GPS coordinates, camera serial numbers, timestamps) from PNG and JPG photos.
 
+Live demo:<br>
+https://photo-scrubber.woza.work/
+
 <br>
 
-<img src="images/image1.png" alt="App screenshot" width="500">
+<img src="images/image1.png" alt="App screenshot" height="500">
 <p>Simple UI</p>
 
 <br>
