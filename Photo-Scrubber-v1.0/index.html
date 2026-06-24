@@ -2,7 +2,9 @@
 # Photo Scrubber — Offline Photo Metadata Remover
 # GitHub: https://github.com/vbookshelf/Offline-Photo-Scrubber
 # License: MIT (You are free to share this app with others.)
-# Version: 1.0
+# Version: 1.1 — added output decode verification (catches truncated/
+#                 corrupted source files instead of reporting success
+#                 on an unopenable result)
 -->
 
 <!DOCTYPE html>
@@ -651,6 +653,22 @@
     });
   }
 
+  // The lossless strip is just byte-surgery on the original file: if that
+  // original file was truncated or corrupted to begin with, the strip
+  // functions can still walk off the end cleanly (no exception) and hand
+  // back a blob that looks done but won't actually open. This loads the
+  // finished output back through the browser's own image decoder so a
+  // broken result is caught as a failure instead of reported as a success.
+  function verifyBlobDecodes(blob){
+    return new Promise(function(resolve){
+      var url = URL.createObjectURL(blob);
+      var img = new Image();
+      img.onload = function(){ URL.revokeObjectURL(url); resolve(true); };
+      img.onerror = function(){ URL.revokeObjectURL(url); resolve(false); };
+      img.src = url;
+    });
+  }
+
   async function buildCleanBlob(entry, arrayBuffer){
     var orientation = (entry.exif && entry.exif.Orientation) || 1;
     if (orientation > 1) {
@@ -938,6 +956,14 @@
         entry.exif = scanBefore.exif || {};
 
         var blob = await buildCleanBlob(entry, buffer);
+
+        // Confirm the output is actually a usable image before calling this
+        // a success — a corrupted/truncated source can otherwise produce a
+        // blob that "finishes" cleanly but never opens. Treat a failed
+        // decode the same as any other processing failure.
+        var decodes = await verifyBlobDecodes(blob);
+        if (!decodes) throw new Error('Output image failed to decode');
+
         entry.cleanBlob = blob;
 
         // Verify by re-scanning the actual output bytes, not by assuming the
