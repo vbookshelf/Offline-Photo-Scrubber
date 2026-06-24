@@ -1,0 +1,1016 @@
+<!--
+# Photo Scrubber — Offline Photo Metadata Remover
+# GitHub: https://github.com/vbookshelf/Offline-Photo-Scrubber
+# License: MIT (You are free to share this app with others.)
+# Version: 1.0
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Photo Scrubber — Offline Photo Metadata Remover</title>
+<meta name="description" content="A free open source tool to strip EXIF metadata from jpg and png photos. Works offline. No ads. No signup.">
+
+<!-- Inline SVG Favicon matching the blue theme accent color -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%233F83F8%22><path d=%22M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z%22/></svg>">
+
+<style>
+  :root {
+    --bg-main: #0A0A0C;
+    --bg-card: #121214;
+    --bg-inner: #18181C;
+    --border: #222226;
+    --border-hover: #33333C;
+    --border-container: #44444A; /* Brighter container border */
+    --text-main: #E4E4E7;
+    --text-muted: #94949A; /* Increased brightness for WCAG AA compliance */
+    --accent: #3F83F8;
+    --danger: #F87171;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--sans);
+    font-size: 0.875rem; /* ~14px relative font size */
+    line-height: 1.5;
+    margin: 0;
+    padding: 40px 16px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-card);
+    border: 1.5px solid rgba(91,140,255,0.5); /* Applied brighter border */
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  /* Changed "Scrubber" word color to match the blue save button accent */
+  .logo span { color: var(--accent); }
+  
+  .status {
+    font-size: 0.75rem; /* ~12px for better readability */
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    background: #10B981;
+    border-radius: 50%;
+  }
+  .status a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .status a:hover {
+    color: var(--accent);
+  }
+
+  .dropzone {
+    margin: 20px;
+    /* Applied a lighter, more visible semi-transparent dashed border */
+    border: 1px dashed rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-inner);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .dropzone:hover, .dropzone.drag {
+    border-color: var(--accent);
+    background: rgba(63, 131, 248, 0.02);
+  }
+  .dropzone p { margin: 0; font-weight: 600; color: var(--text-main); }
+  .dropzone span { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px; }
+  .dropzone input { display: none; }
+
+  .file-list {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .file-card {
+    background: var(--bg-inner);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .file-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+  .file-thumb {
+    width: 40px; height: 40px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+  .file-details { flex: 1; min-width: 0; }
+  .file-name {
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .file-summary.error {
+    color: var(--danger);
+  }
+  .file-summary {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .file-quality {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .file-quality-dot {
+    width: 4px; height: 4px;
+    background: #10B981;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .file-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-main);
+    transition: border-color 0.15s, background 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-inner);
+  }
+  
+  /* Restored to original button styles */
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+  }
+  .btn-primary:hover {
+    background: #2563EB;
+  }
+
+  .file-remove {
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.125rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+  }
+  .file-remove:hover { color: var(--text-main); }
+
+  /* Collapsible Metadata Inspector styles */
+  .meta-details {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding-top: 8px;
+    width: 100%;
+  }
+  .meta-details summary {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    padding: 2px 0;
+    transition: color 0.15s;
+  }
+  .meta-details summary:hover {
+    color: var(--text-main);
+  }
+  .meta-content {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0,0,0,0.15);
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-family: monospace;
+  }
+  .meta-label {
+    color: var(--text-muted);
+  }
+  .meta-val {
+    color: var(--text-main);
+    text-align: right;
+    word-break: break-all;
+    max-width: 70%;
+  }
+  .meta-note {
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  .empty-state {
+    padding: 0 40px 30px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <span class="logo">Photo <span>Scrubber</span></span>
+    <span class="status"><a href="https://github.com/vbookshelf/Offline-Photo-Scrubber" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+  </header>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Add photos">
+    <p>Select or drag & drop photos</p>
+    <span>Supports JPEG &amp; PNG</span>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
+  </div>
+
+  <div class="file-list" id="fileList"></div>
+  
+  <div class="empty-state" id="emptyState">
+    Photo Scrubber removes metadata from your photos.<br>
+	All photos are processed in the browser, on your device.<br>
+	Your photos are never sent to an external server.
+	
+	<div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.7rem; text-align: left; line-height: 1.4;">
+  <strong>Disclaimer:</strong> Provided "as is" without warranty of any kind. While this tool is designed to strip privacy-compromising EXIF/GPS data, always manually verify mission-critical photos before public distribution. A simple process for manual verification is explained in the <a href="https://github.com/vbookshelf/Offline-Photo-Scrubber" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; font-weight: 600;">GitHub</a> readme.
+</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var files = {};      
+  var nextId = 1;
+
+  var dropzone   = document.getElementById('dropzone');
+  var fileInput  = document.getElementById('fileInput');
+  var fileList   = document.getElementById('fileList');
+  var emptyState = document.getElementById('emptyState');
+
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function readAsArrayBuffer(file){
+    return new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onload = function(){ resolve(r.result); };
+      r.onerror = reject;
+      r.readAsArrayBuffer(file);
+    });
+  }
+
+  function detectKind(bytes){
+    if (bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return 'jpeg';
+    if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return 'png';
+    return null;
+  }
+
+  /* =========================================================
+     EXIF / Metadata Tag Reading
+  ========================================================= */
+  var TAG_NAMES = {
+    0x010F: 'Make', 0x0110: 'Model', 0x0112: 'Orientation',
+    0x0131: 'Software', 0x0132: 'DateTime', 0x013B: 'Artist',
+    0x8298: 'Copyright', 0x8769: 'ExifIFD', 0x8825: 'GPSInfo',
+    0x9003: 'DateTimeOriginal'
+  };
+  var GPS_TAG_NAMES = {
+    0x0001: 'GPSLatitudeRef', 0x0002: 'GPSLatitude',
+    0x0003: 'GPSLongitudeRef', 0x0004: 'GPSLongitude'
+  };
+  var TYPE_SIZES = {1:1,2:1,3:2,4:4,5:8,6:1,7:1,8:2,9:4,10:8,11:4,12:8};
+
+  function readIfd(view, tiffStart, ifdOffset, little, tagNames){
+    var result = {};
+    var entryCount = view.getUint16(tiffStart + ifdOffset, little);
+    var base = tiffStart + ifdOffset + 2;
+    for (var i = 0; i < entryCount; i++){
+      var entryOffset = base + i * 12;
+      var tag = view.getUint16(entryOffset, little);
+      var type = view.getUint16(entryOffset + 2, little);
+      var count = view.getUint32(entryOffset + 4, little);
+      var unitSize = TYPE_SIZES[type] || 1;
+      var totalSize = unitSize * count;
+      var valueOffset = (totalSize > 4) ? tiffStart + view.getUint32(entryOffset + 8, little) : entryOffset + 8;
+
+      var name = tagNames[tag];
+      if (!name) continue;
+
+      if (type === 2){ // ASCII
+        var chars = [];
+        for (var c = 0; c < count - 1; c++){
+          var code = view.getUint8(valueOffset + c);
+          if (code === 0) break;
+          chars.push(String.fromCharCode(code));
+        }
+        result[name] = chars.join('').trim();
+      } else if (type === 3){
+        result[name] = view.getUint16(valueOffset, little);
+      } else if (type === 4){
+        result[name] = view.getUint32(valueOffset, little);
+      } else if (type === 5){
+        var rationals = [];
+        for (var r = 0; r < count; r++){
+          var num = view.getUint32(valueOffset + r*8, little);
+          var den = view.getUint32(valueOffset + r*8 + 4, little);
+          rationals.push(den === 0 ? 0 : num/den);
+        }
+        result[name] = (count === 1) ? rationals[0] : rationals;
+      }
+    }
+    return result;
+  }
+
+  function dmsToDecimal(dms, ref){
+    if (!Array.isArray(dms) || dms.length < 3) return null;
+    var deg = dms[0] + dms[1]/60 + dms[2]/3600;
+    if (ref === 'S' || ref === 'W') deg = -deg;
+    return deg;
+  }
+
+  function parseTiff(tiffBuffer){
+    var view = new DataView(tiffBuffer);
+    var byteOrder = view.getUint16(0, false);
+    var little = (byteOrder === 0x4949);
+    if (byteOrder !== 0x4949 && byteOrder !== 0x4D4D) return null;
+    var ifd0Offset = view.getUint32(4, little);
+
+    var tags = readIfd(view, 0, ifd0Offset, little, TAG_NAMES);
+    var out = {
+      Make: tags.Make, Model: tags.Model, Software: tags.Software,
+      DateTime: tags.DateTime, Artist: tags.Artist,
+      Copyright: tags.Copyright, Orientation: tags.Orientation
+    };
+
+    if (tags.ExifIFD){
+      var sub = readIfd(view, 0, tags.ExifIFD, little, TAG_NAMES);
+      if (sub.DateTimeOriginal) out.DateTimeOriginal = sub.DateTimeOriginal;
+    }
+
+    if (tags.GPSInfo){
+      var gps = readIfd(view, 0, tags.GPSInfo, little, GPS_TAG_NAMES);
+      if (gps.GPSLatitude && gps.GPSLongitude) {
+        var lat = dmsToDecimal(gps.GPSLatitude, gps.GPSLatitudeRef);
+        var lon = dmsToDecimal(gps.GPSLongitude, gps.GPSLongitudeRef);
+        if (lat !== null && lon !== null) {
+          out.GPS = lat.toFixed(5) + ', ' + lon.toFixed(5);
+        }
+      }
+    }
+    return out;
+  }
+
+  /* =========================================================
+     Essential-Segment Classification
+     ---------------------------------------------------------
+     Instead of maintaining a list of "known metadata types" to look
+     for (which can never be complete — there's always some chunk/
+     marker type nobody thought to add), we classify in the opposite
+     direction: is this segment required to decode the pixels? If not,
+     it's treated as removable, whether or not we recognize what it is.
+     This is the single source of truth used by both the scanner
+     (what's present) and the stripper (what gets cut), so they can
+     never drift out of sync with each other.
+  ========================================================= */
+  function isJpegSegmentEssential(marker){
+    // SOF0-15 (incl. DHT 0xC4, DAC 0xCC), DQT, DNL, DRI are required to
+    // decode pixel data. 0xFFC8 (JPG, reserved) is not a real SOF marker.
+    if (marker >= 0xFFC0 && marker <= 0xFFCF && marker !== 0xFFC8) return true;
+    if (marker === 0xFFDB) return true; // DQT - quantization tables
+    if (marker === 0xFFDC) return true; // DNL - number of lines
+    if (marker === 0xFFDD) return true; // DRI - restart interval
+    return false; // everything else (APPn, COM, reserved markers) is non-essential
+  }
+
+  var JPEG_MARKER_LABELS = {
+    0xFFE0: 'Image Format Info', 0xFFE1: 'Exif / XMP Data', 0xFFE2: 'Color Profile Info',
+    0xFFED: 'Photoshop / IPTC Data', 0xFFEE: 'Adobe Color Transform', 0xFFFE: 'Comment'
+  };
+  function jpegSegmentLabel(marker){
+    if (JPEG_MARKER_LABELS[marker]) return JPEG_MARKER_LABELS[marker];
+    if (marker >= 0xFFE0 && marker <= 0xFFEF) return 'Application Data (APP' + (marker - 0xFFE0) + ')';
+    return 'Unrecognized Segment (0x' + marker.toString(16).toUpperCase() + ')';
+  }
+
+  function isPngChunkEssential(type){
+    // IHDR/PLTE/IDAT/IEND are required to decode the image. tRNS defines
+    // transparency and changes how the image actually looks if dropped,
+    // so it's treated as essential too, not as removable metadata.
+    return type === 'IHDR' || type === 'PLTE' || type === 'IDAT' || type === 'IEND' || type === 'tRNS';
+  }
+
+  var PNG_CHUNK_LABELS = {
+    eXIf: 'Exif Data', tEXt: 'Text Comment', zTXt: 'Compressed Text Comment',
+    iTXt: 'International Text Comment', tIME: 'Last-Modified Time',
+    iCCP: 'ICC Color Profile', pHYs: 'Pixel Density', gAMA: 'Gamma',
+    cHRM: 'Chromaticity', sRGB: 'sRGB Flag', bKGD: 'Background Color',
+    sBIT: 'Significant Bits', hIST: 'Histogram', sPLT: 'Suggested Palette'
+  };
+  function pngChunkLabel(type){
+    return PNG_CHUNK_LABELS[type] || ('Unrecognized Chunk (' + type + ')');
+  }
+
+  /* =========================================================
+     Metadata Scanning (used BOTH before stripping, to know what's
+     there, and after stripping, to verify it's actually gone)
+  ========================================================= */
+  function scanJpegSegments(buffer){
+    var view = new DataView(buffer);
+    var result = { nonEssential: [], exif: null };
+    if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return result;
+    var offset = 2;
+    while (offset < view.byteLength - 4){
+      var marker = view.getUint16(offset);
+      if (marker === 0xFFD9 || marker === 0xFFDA) break; // EOI / start of entropy data
+      if ((marker & 0xFF00) !== 0xFF00) break;
+      var length = view.getUint16(offset + 2);
+      if (!isJpegSegmentEssential(marker)){
+        result.nonEssential.push({ marker: marker, label: jpegSegmentLabel(marker) });
+        if (marker === 0xFFE1){
+          var sigStart = offset + 4;
+          var sig = String.fromCharCode(view.getUint8(sigStart), view.getUint8(sigStart+1), view.getUint8(sigStart+2), view.getUint8(sigStart+3));
+          if (sig === 'Exif'){
+            result.exif = parseTiff(buffer.slice(sigStart + 6, offset + 2 + length));
+          }
+        }
+      }
+      offset += 2 + length;
+    }
+    return result;
+  }
+
+  function scanPngChunks(buffer){
+    var view = new DataView(buffer);
+    var result = { nonEssential: [], textFields: {}, exif: null };
+    if (view.byteLength < 8) return result;
+    var offset = 8;
+    while (offset < view.byteLength - 8){
+      var len = view.getUint32(offset);
+      var type = String.fromCharCode(view.getUint8(offset+4), view.getUint8(offset+5), view.getUint8(offset+6), view.getUint8(offset+7));
+      var dataStart = offset + 8;
+
+      if (!isPngChunkEssential(type)){
+        result.nonEssential.push({ type: type, label: pngChunkLabel(type) });
+        if (type === 'tEXt' || type === 'iTXt'){
+          var bytes = new Uint8Array(buffer, dataStart, len);
+          var nul = bytes.indexOf(0);
+          if (nul > -1){
+            var keyword = String.fromCharCode.apply(null, bytes.subarray(0, nul));
+            var valBytes = bytes.subarray(nul+1);
+            var value = String.fromCharCode.apply(null, valBytes.filter(function(b){ return b >= 32 && b < 127; }));
+            result.textFields[keyword] = value.trim() || 'Detected';
+          }
+        } else if (type === 'eXIf'){
+          result.exif = parseTiff(buffer.slice(dataStart, dataStart + len));
+        }
+      }
+
+      if (type === 'IEND') break;
+      offset = dataStart + len + 4;
+    }
+    return result;
+  }
+
+  /* =========================================================
+     Lossless Binary Stripping
+     Both functions now keep a segment/chunk only if it's classified
+     essential above — the inverse of a "known metadata types" blacklist,
+     so an unrecognized container is removed by default, not ignored.
+  ========================================================= */
+  function stripJpegMetadataLossless(arrayBuffer) {
+    var view = new DataView(arrayBuffer);
+    var bytes = new Uint8Array(arrayBuffer);
+    if (view.getUint16(0) !== 0xFFD8) throw new Error("Invalid JPEG");
+
+    var chunks = [];
+    chunks.push(bytes.subarray(0, 2)); 
+
+    var offset = 2;
+    var length = arrayBuffer.byteLength;
+
+    while (offset < length) {
+      if (offset + 4 > length) {
+        chunks.push(bytes.subarray(offset));
+        break;
+      }
+      var marker = view.getUint16(offset);
+      if (marker === 0xFFDA || marker === 0xFFD9) { 
+        chunks.push(bytes.subarray(offset));
+        break;
+      }
+      if ((marker & 0xFF00) !== 0xFF00) {
+        chunks.push(bytes.subarray(offset));
+        break;
+      }
+
+      var segmentLength = view.getUint16(offset + 2);
+      if (offset + 2 + segmentLength > length) {
+        chunks.push(bytes.subarray(offset));
+        break;
+      }
+      var nextOffset = offset + 2 + segmentLength;
+
+      if (isJpegSegmentEssential(marker)) {
+        chunks.push(bytes.subarray(offset, nextOffset));
+      }
+      offset = nextOffset;
+    }
+
+    return new Blob(chunks, { type: "image/jpeg" });
+  }
+
+  function stripPngMetadataLossless(arrayBuffer) {
+    var view = new DataView(arrayBuffer);
+    var bytes = new Uint8Array(arrayBuffer);
+    if (view.getUint32(0) !== 0x89504E47) throw new Error("Invalid PNG");
+
+    var chunks = [];
+    chunks.push(bytes.subarray(0, 8)); 
+
+    var offset = 8;
+    var length = arrayBuffer.byteLength;
+
+    while (offset < length) {
+      if (offset + 12 > length) break;
+      var chunkLength = view.getUint32(offset);
+      var nextOffset = offset + 12 + chunkLength;
+      if (nextOffset > length) {
+        chunks.push(bytes.subarray(offset));
+        break;
+      }
+
+      var chunkTypeBytes = bytes.subarray(offset + 4, offset + 8);
+      var chunkType = String.fromCharCode.apply(null, chunkTypeBytes);
+
+      if (isPngChunkEssential(chunkType)) {
+        chunks.push(bytes.subarray(offset, nextOffset));
+      }
+
+      if (chunkType === "IEND") break;
+      offset = nextOffset;
+    }
+
+    return new Blob(chunks, { type: "image/png" });
+  }
+
+  /* =========================================================
+     Canvas Re-encoding Fallback (Only used for rotated images)
+  ========================================================= */
+  function stripImage(file, kind, orientation){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        // Browsers already auto-rotate decoded images per their EXIF orientation
+        // tag (naturalWidth/naturalHeight already reflect the corrected orientation),
+        // so we just draw the image as-is and bake in that already-correct rotation.
+        // No manual transform needed.
+        var canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        canvas.toBlob(function(blob){
+          if (!blob) return reject(new Error('Process failed'));
+          resolve(blob);
+        }, kind === 'png' ? 'image/png' : 'image/jpeg', 0.92);
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('Load error')); };
+      img.src = url;
+    });
+  }
+
+  async function buildCleanBlob(entry, arrayBuffer){
+    var orientation = (entry.exif && entry.exif.Orientation) || 1;
+    if (orientation > 1) {
+      entry.method = 'Re-encoded (Auto-Rotated)';
+      var rotatedBlob = await stripImage(entry.file, entry.kind, orientation);
+
+      // The canvas encoder that just produced rotatedBlob unconditionally writes
+      // back a few standard structural chunks (JFIF/color profile info etc).
+      // Crucially, the rotated output no longer carries an orientation tag, so
+      // a second pass here takes the lossless byte-level path below instead of
+      // going through the canvas again — meaning it can actually delete those
+      // chunks instead of regenerating them. One extra pass is enough; there's
+      // no need to loop, since this isn't a "strip more each time" process.
+      var rotatedBuffer = await rotatedBlob.arrayBuffer();
+      return entry.kind === 'png' ? stripPngMetadataLossless(rotatedBuffer) : stripJpegMetadataLossless(rotatedBuffer);
+    } else {
+      entry.method = 'Lossless Strip';
+      return entry.kind === 'png' ? stripPngMetadataLossless(arrayBuffer) : stripJpegMetadataLossless(arrayBuffer);
+    }
+  }
+
+  /* =========================================================
+     UI Management
+  ========================================================= */
+  function slugify(name){
+    var dot = name.lastIndexOf('.');
+    var base = dot > -1 ? name.slice(0, dot) : name;
+    var ext = dot > -1 ? name.slice(dot) : '';
+    return base.replace(/[^a-zA-Z0-9-_]+/g, '-') + ext;
+  }
+
+  function buildInspectorHtml(entry){
+    var before = entry.scanBefore || { nonEssential: [], textFields: {}, exif: null };
+    var after = entry.scanAfter || { nonEssential: [] };
+    var exif = entry.exif || {};
+    var pngText = before.textFields || {};
+    var rows = '';
+    var accountedFor = {}; // tracks which scanned items we've already turned into a named row
+
+    function addRow(label, val){
+      if (!val) return;
+      rows += '<div class="meta-row"><span class="meta-label">' + escapeHtml(label) + '</span><span class="meta-val">' + escapeHtml(val) + '</span></div>';
+    }
+
+    if (exif.GPS) addRow('GPS Coordinates', exif.GPS);
+    if (exif.Make || exif.Model) addRow('Device', [exif.Make, exif.Model].filter(Boolean).join(' '));
+    if (exif.DateTimeOriginal || exif.DateTime) addRow('Captured', exif.DateTimeOriginal || exif.DateTime);
+    if (exif.Software) addRow('Software', exif.Software);
+    if (exif.Artist) addRow('Artist', exif.Artist);
+    if (exif.Copyright) addRow('Copyright', exif.Copyright);
+    if (entry.kind === 'jpeg' && exif && Object.keys(exif).length) accountedFor['marker:65505'] = true; // 0xFFE1 already represented via exif rows above
+
+    Object.keys(pngText).forEach(function(k){
+      addRow(k, pngText[k]);
+      accountedFor['type:tEXt'] = true;
+      accountedFor['type:iTXt'] = true;
+    });
+    if (entry.kind === 'png' && before.exif && Object.keys(before.exif).length) accountedFor['type:eXIf'] = true;
+
+    // Any scanned container we haven't already turned into a specific row
+    // above still gets listed generically, so nothing detected is silently
+    // dropped from view just because we don't decode its contents.
+    before.nonEssential.forEach(function(item){
+      var key = entry.kind === 'jpeg' ? ('marker:' + item.marker) : ('type:' + item.type);
+      if (accountedFor[key]) return;
+      addRow(item.label, 'Removed');
+      accountedFor[key] = true;
+    });
+
+    var html = '';
+    if (rows) {
+      html += '<details class="meta-details" open>' +
+                '<summary>View removed metadata (' + before.nonEssential.length + ')</summary>' +
+                '<div class="meta-content">' + rows + '</div>' +
+              '</details>';
+    }
+
+    // If verification found anything still present in the actual output
+    // bytes, decide whether that's a real problem or expected noise.
+    //
+    // Lossless Strip: we're surgically editing the SAME file's bytes, so
+    // anything left over really is a failure to remove something that
+    // was there originally.
+    //
+    // Re-encoded (Auto-Rotated): the output is a brand-new file drawn from
+    // raw pixels — none of the original Exif/GPS/IPTC data is even
+    // *capable* of surviving that. Any non-essential container the scan
+    // finds here (almost always a JFIF header and/or a standard sRGB ICC
+    // profile) was written fresh by the browser's own JPEG/PNG encoder as
+    // generic boilerplate, not carried over from the original photo. We
+    // only treat this method as a real failure if the output somehow
+    // contains decodable personal fields (Exif/GPS/text), which would
+    // mean something unexpected happened.
+    if (after.nonEssential && after.nonEssential.length) {
+      var afterHasIdentifying = !!((after.exif && Object.keys(after.exif).length) ||
+                                    (after.textFields && Object.keys(after.textFields).length));
+      var stillRows = after.nonEssential.map(function(item){
+        return '<div class="meta-row"><span class="meta-label">' + escapeHtml(item.label) + '</span><span class="meta-val">Still present</span></div>';
+      }).join('');
+
+      if (entry.method === 'Re-encoded (Auto-Rotated)' && !afterHasIdentifying) {
+        var addedRows = after.nonEssential.map(function(item){
+          return '<div class="meta-row"><span class="meta-label">' + escapeHtml(item.label) + '</span><span class="meta-val">Added automatically</span></div>';
+        }).join('');
+        html += '<details class="meta-details">' +
+                  '<summary style="color:var(--text-muted);">' + after.nonEssential.length + ' standard setting' + (after.nonEssential.length === 1 ? '' : 's') + ' added back by your browser</summary>' +
+                  '<div class="meta-content">' +
+                    '<div class="meta-note">Rotating this photo required redrawing it from scratch. Your browser automatically added a couple of standard technical settings back in (like color format) so the image displays correctly \u2014 these contain no personal information.</div>' +
+                    addedRows +
+                  '</div>' +
+                '</details>';
+      } else {
+        html += '<details class="meta-details" open>' +
+                  '<summary style="color:var(--danger);">Not fully removed (' + after.nonEssential.length + ')</summary>' +
+                  '<div class="meta-content">' + stillRows + '</div>' +
+                '</details>';
+      }
+    }
+
+    return html;
+  }
+
+  function renderEntry(id){
+    var entry = files[id];
+    var card = document.getElementById('file-' + id);
+    if (!card) return;
+
+    if (entry.cleanBlob) {
+      var beforeCount = (entry.scanBefore && entry.scanBefore.nonEssential.length) || 0;
+      var afterList = (entry.scanAfter && entry.scanAfter.nonEssential) || [];
+      var afterCount = afterList.length;
+      var afterHasIdentifying = !!(entry.scanAfter && (
+        (entry.scanAfter.exif && Object.keys(entry.scanAfter.exif).length) ||
+        (entry.scanAfter.textFields && Object.keys(entry.scanAfter.textFields).length)
+      ));
+      var summaryEl = card.querySelector('.file-summary');
+      var noMetadataFound = (beforeCount === 0);
+
+      if (noMetadataFound) {
+        summaryEl.textContent = 'No hidden metadata found.';
+        summaryEl.classList.remove('error');
+      } else if (entry.method === 'Re-encoded (Auto-Rotated)') {
+        // The output is a freshly drawn image; original Exif/GPS/IPTC data
+        // cannot survive that process. Only flag this as a failure if
+        // identifying data somehow still decodes from the output.
+        if (afterHasIdentifying) {
+          summaryEl.textContent = 'Re-encoding did not fully remove identifying metadata.';
+          summaryEl.classList.add('error');
+        } else {
+          summaryEl.textContent = 'Metadata removed.';
+          summaryEl.classList.remove('error');
+        }
+      } else if (afterCount === 0) {
+        summaryEl.textContent = 'Metadata removed.';
+        summaryEl.classList.remove('error');
+      } else {
+        summaryEl.textContent = 'Some metadata could not be removed.';
+        summaryEl.classList.add('error');
+      }
+
+      // Full verification detail goes to the console rather than the card —
+      // the card stays a simple pass/fail message for the user, while this
+      // gives a developer (or anyone with devtools open) the actual evidence
+      // behind that message: what was found before, what's left after, and
+      // which strip method ran.
+      console.log('[Photo Scrubber] ' + entry.file.name + ':', {
+        method: entry.method,
+        before: (entry.scanBefore && entry.scanBefore.nonEssential.map(function(item){ return item.label; })) || [],
+        after: afterList.map(function(item){ return item.label; }),
+        afterHasIdentifying: afterHasIdentifying
+      });
+      
+      // Update output quality display (only meaningful if we actually had something to strip)
+      if (!noMetadataFound) {
+        var qualityText;
+        if (entry.method === 'Lossless Strip') {
+          qualityText = 'Image quality: Same as original';
+        } else if (entry.kind === 'png') {
+          qualityText = 'Image quality: Same as original';
+        } else {
+          qualityText = 'Image quality: ~92% of original';
+        }
+        card.querySelector('.file-quality').innerHTML = qualityText;
+      } else {
+        card.querySelector('.file-quality').innerHTML = '';
+      }
+
+      var inspectorHtml = buildInspectorHtml(entry);
+      if (inspectorHtml) {
+        var div = document.createElement('div');
+        div.innerHTML = inspectorHtml;
+        while (div.firstChild) {
+          card.appendChild(div.firstChild);
+        }
+      }
+
+      var slot = card.querySelector('.file-action-slot');
+      slot.innerHTML = '';
+
+      if (!noMetadataFound) {
+        var ext = entry.kind === 'png' ? '.png' : '.jpg';
+        var filename = slugify(entry.file.name.replace(/\.[^.]+$/, '')) + '-clean' + ext;
+
+        var link = document.createElement('a');
+        link.className = 'btn btn-primary';
+        link.href = URL.createObjectURL(entry.cleanBlob);
+        link.download = filename;
+        link.textContent = 'Save';
+
+        slot.appendChild(link);
+      }
+    } else {
+      card.querySelector('.file-summary').textContent = 'Processing...';
+    }
+  }
+
+  function addUnsupportedFileCard(id, file){
+    var div = document.createElement('div');
+    div.className = 'file-card';
+    div.id = 'file-' + id;
+    div.innerHTML =
+      '<div class="file-head">' +
+        '<div class="file-thumb" id="thumb-' + id + '"></div>' +
+        '<div class="file-details">' +
+          '<div class="file-name">' + escapeHtml(file.name) + '</div>' +
+          '<div class="file-summary error">File type not supported. Please convert image to png or jpg.</div>' +
+          '<div class="file-quality"></div>' +
+        '</div>' +
+        '<div class="file-action-slot" style="margin-right: 8px;"></div>' +
+        '<button class="file-remove" data-action="remove" data-id="' + id + '" aria-label="Remove">&times;</button>' +
+      '</div>';
+    fileList.insertBefore(div, fileList.firstChild);
+  }
+
+  function addFileCard(id, file){
+    var div = document.createElement('div');
+    div.className = 'file-card';
+    div.id = 'file-' + id;
+    div.innerHTML =
+      '<div class="file-head">' +
+        '<img class="file-thumb" id="thumb-' + id + '" alt="">' +
+        '<div class="file-details">' +
+          '<div class="file-name">' + escapeHtml(file.name) + '</div>' +
+          '<div class="file-summary">Preparing...</div>' +
+          '<div class="file-quality"></div>' +
+        '</div>' +
+        '<div class="file-action-slot" style="margin-right: 8px;"></div>' +
+        '<button class="file-remove" data-action="remove" data-id="' + id + '" aria-label="Remove">&times;</button>' +
+      '</div>';
+    fileList.insertBefore(div, fileList.firstChild);
+
+    var url = URL.createObjectURL(file);
+    document.getElementById('thumb-' + id).src = url;
+  }
+
+  function refreshEmptyState(){
+    var hasFiles = fileList.children.length > 0;
+    emptyState.style.display = hasFiles ? 'none' : 'block';
+  }
+
+  async function handleFiles(fileArray){
+    for (var i = 0; i < fileArray.length; i++){
+      var file = fileArray[i];
+      if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+        addUnsupportedFileCard(nextId++, file);
+        refreshEmptyState();
+        continue;
+      }
+
+      var id = nextId++;
+      var entry = { file: file, kind: null, exif: null, scanBefore: null, scanAfter: null, cleanBlob: null, method: null };
+      files[id] = entry;
+
+      addFileCard(id, file);
+      refreshEmptyState();
+
+      try {
+        var buffer = await readAsArrayBuffer(file);
+        var bytes = new Uint8Array(buffer);
+        var kind = detectKind(bytes);
+        entry.kind = kind;
+
+        var scanBefore = (kind === 'jpeg') ? scanJpegSegments(buffer) : scanPngChunks(buffer);
+        entry.scanBefore = scanBefore;
+        entry.exif = scanBefore.exif || {};
+
+        var blob = await buildCleanBlob(entry, buffer);
+        entry.cleanBlob = blob;
+
+        // Verify by re-scanning the actual output bytes, not by assuming the
+        // strip step worked. This is what lets the message be evidence-based:
+        // if anything non-essential is still in the output, we'll see it here
+        // instead of reporting success on faith.
+        var cleanedBuffer = await blob.arrayBuffer();
+        entry.scanAfter = (kind === 'jpeg') ? scanJpegSegments(cleanedBuffer) : scanPngChunks(cleanedBuffer);
+
+        renderEntry(id);
+      } catch (err) {
+        var card = document.getElementById('file-' + id);
+        if (card) card.querySelector('.file-summary').textContent = 'Processing failed.';
+      }
+    }
+  }
+
+  /* =========================================================
+     Wiring
+  ========================================================= */
+  dropzone.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+  });
+  fileInput.addEventListener('change', function(){
+    handleFiles(Array.prototype.slice.call(fileInput.files));
+    fileInput.value = '';
+  });
+
+  // The whole app is the drop target now, not just the dropzone box.
+  // dragenter/dragleave fire repeatedly as the cursor crosses child
+  // elements, so a simple add/remove on each event causes the highlight
+  // to flicker. A counter that tracks nested enter/leave pairs avoids that:
+  // it only goes back to zero (highlight off) once the cursor has actually
+  // left every nested element, i.e. left the window.
+  var dragDepth = 0;
+
+  document.addEventListener('dragenter', function(e){
+    e.preventDefault();
+    dragDepth++;
+    dropzone.classList.add('drag');
+  });
+  document.addEventListener('dragover', function(e){
+    e.preventDefault();
+  });
+  document.addEventListener('dragleave', function(e){
+    e.preventDefault();
+    dragDepth--;
+    if (dragDepth <= 0) {
+      dragDepth = 0;
+      dropzone.classList.remove('drag');
+    }
+  });
+  document.addEventListener('drop', function(e){
+    e.preventDefault();
+    dragDepth = 0;
+    dropzone.classList.remove('drag');
+    var dropped = e.dataTransfer && e.dataTransfer.files;
+    if (dropped && dropped.length) handleFiles(Array.prototype.slice.call(dropped));
+  });
+
+  fileList.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action="remove"]');
+    if (!btn) return;
+    var id = Number(btn.getAttribute('data-id'));
+    var card = document.getElementById('file-' + id);
+    if (card) card.remove();
+    delete files[id];
+    refreshEmptyState();
+  });
+
+  refreshEmptyState();
+})();
+</script>
+</body>
+</html>
