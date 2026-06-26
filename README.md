@@ -29,8 +29,6 @@ This app strips hidden metadata from JPG and PNG images. Use it to remove person
 
 - <b>Transparency</b>: You can manually verify that metadata was removed by using the file info inspectors that are built into macOS and Windows (more info below).
 
-- <b>No Monetization/Dark Patterns</b>: There are no advertisements, cookies, hidden tracking pixels, premium upgrades, or sign-up walls.
-
 ## Architecture
 
 - <b>Whitelist Approach</b>: Instead of maintaining a "blacklist" of bad tags (which can easily fail if a new camera format introduces a custom tag), the app uses a whitelist approach via isJpegSegmentEssential and isPngChunkEssential. It strictly looks for the structural blocks required to render the image (like IHDR, PLTE, IDAT for PNGs). If a block isn't strictly necessary to display the pixels, it is discarded by default.
